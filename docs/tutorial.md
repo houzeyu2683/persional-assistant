@@ -122,7 +122,7 @@ packages = ["src/pa"]
 
 # Model (any OpenAI-compatible API, e.g. OpenRouter)
 MODEL_NAME=google/gemma-4-31b-it
-MODEL_URL=https://openrouter.ai/api/v1
+MODEL_URL=你的 API 位址
 MODEL_KEY=your-api-key-here
 
 # Model context window in tokens; auto-summarization triggers at 85% of it.
@@ -132,6 +132,8 @@ MODEL_CONTEXT=262144
 # Optional: where the agent reads/writes files and runs commands (default: ./workspace)
 # PA_WORKSPACE=/path/to/workspace
 ```
+
+`MODEL_URL` 請填入模型服務提供的 API 位址，可以在 OpenRouter 的文件中找到（使用其他相容 OpenAI 格式的服務也可以）。
 
 複製一份成 `.env`，填入你的金鑰：
 
