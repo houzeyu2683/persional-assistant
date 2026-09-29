@@ -6,7 +6,7 @@ import os
 
 from dotenv import load_dotenv
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parents[2]  # src/pa/config.py -> project root
 load_dotenv(PROJECT_ROOT / ".env")
 
 

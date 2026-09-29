@@ -197,3 +197,7 @@ class AssistantApp(App):
                                                classes="tool", markup=False))
         await close_text()
         return interrupt
+
+
+def main() -> None:
+    AssistantApp().run()

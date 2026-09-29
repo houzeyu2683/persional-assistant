@@ -18,4 +18,4 @@ cat <<'MSG'
 MSG
 read -r
 
-MODEL_CONTEXT=8000 PA_WORKSPACE=/tmp/pa-summarization-test python main.py
+MODEL_CONTEXT=8000 PA_WORKSPACE=/tmp/pa-summarization-test pa
