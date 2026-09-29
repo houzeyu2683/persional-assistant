@@ -15,6 +15,7 @@ class Settings:
     model_name: str
     model_url: str
     model_key: str
+    model_context: int | None  # max input tokens; drives when summarization kicks in
     workspace: Path
 
 
@@ -28,5 +29,6 @@ def load_settings() -> Settings:
         model_name=os.environ["MODEL_NAME"],
         model_url=os.environ["MODEL_URL"],
         model_key=os.environ["MODEL_KEY"],
+        model_context=int(os.environ["MODEL_CONTEXT"]) if os.getenv("MODEL_CONTEXT") else None,
         workspace=workspace,
     )

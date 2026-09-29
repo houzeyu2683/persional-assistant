@@ -4,6 +4,7 @@ import os
 
 from deepagents import create_deep_agent
 from deepagents.backends.local_shell import LocalShellBackend
+from deepagents.middleware.summarization import create_summarization_tool_middleware
 from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import InMemorySaver
 
@@ -19,6 +20,7 @@ def build_agent(settings: Settings):
         model=settings.model_name,
         base_url=settings.model_url,
         api_key=settings.model_key,
+        profile={"max_input_tokens": settings.model_context} if settings.model_context else None,
     )
     # Shell commands run in the workspace; pass only a minimal env so API keys
     # loaded from .env never leak into agent-run commands.
@@ -31,6 +33,8 @@ def build_agent(settings: Settings):
         model=model,
         system_prompt=SYSTEM_PROMPT,
         backend=backend,
+        # Adds the compact_conversation tool; auto-summarization stays the built-in one.
+        middleware=[create_summarization_tool_middleware(model, backend)],
         interrupt_on={"execute": {"allowed_decisions": ["approve", "reject"]}},
         checkpointer=InMemorySaver(),
     )

@@ -16,6 +16,7 @@ from pa.agent import build_agent
 from pa.config import load_settings
 
 TOOL_RESULT_PREVIEW = 800
+COMPACT_REQUEST = "請立刻呼叫 compact_conversation 工具來濃縮對話，不需要做其他事。"
 
 
 def _short(value, limit: int = TOOL_RESULT_PREVIEW) -> str:
@@ -103,7 +104,8 @@ class AssistantApp(App):
         event.input.value = ""
         event.input.disabled = True
         await self._add(Static(text, classes="user", markup=False))
-        self.run_agent({"messages": [{"role": "user", "content": text}]})
+        content = COMPACT_REQUEST if text == "/compact" else text
+        self.run_agent({"messages": [{"role": "user", "content": content}]})
 
     @work(exclusive=True)
     async def run_agent(self, payload) -> None:
@@ -133,6 +135,7 @@ class AssistantApp(App):
         md: Markdown | None = None
         stream = None
         interrupt = None
+        summary_note: Static | None = None
 
         async def close_text():
             nonlocal md, stream
@@ -146,7 +149,13 @@ class AssistantApp(App):
             if namespace:  # skip subagent internals for now
                 continue
             if mode == "messages":
-                chunk, _meta = data
+                chunk, meta = data
+                if meta.get("lc_source") == "summarization":  # hide the summary LLM's own output
+                    if summary_note is None:
+                        await close_text()
+                        summary_note = Static("📝 對話太長，正在濃縮…", classes="tool")
+                        await self._add(summary_note)
+                    continue
                 if isinstance(chunk, AIMessageChunk) and isinstance(chunk.content, str) and chunk.content:
                     if stream is None:
                         md = Markdown(classes="assistant")
@@ -161,6 +170,15 @@ class AssistantApp(App):
                 if node == "__interrupt__":
                     interrupt = update[0]
                     continue
+                event = update.get("_summarization_event") if isinstance(update, dict) else None
+                if event:
+                    path = event.get("file_path")
+                    text = "📝 對話已濃縮" + (f"，完整舊對話存在 workspace{path}" if path else "")
+                    if summary_note is None:
+                        await self._add(Static(text, classes="tool", markup=False))
+                    else:
+                        summary_note.update(text)
+                    summary_note = None
                 messages = update.get("messages") if isinstance(update, dict) else None
                 if not isinstance(messages, list):
                     continue
