@@ -15,27 +15,23 @@ from deepagents.middleware.summarization import SummarizationMiddleware
 from cfg import Profile
 
 profile = Profile()
-workspace_path = profile.get_workspace_path()
-# 從使用者打 lpa 時所在的資料夾讀取 .env。
-model_variables = dotenv_values(Path.cwd() / ".env")
 chat_model = ChatOpenAI(
-    model=model_variables["MODEL_NAME"],
-    base_url=model_variables["MODEL_URL"],
-    api_key=model_variables["API_KEY"],
+    model=profile.secret["MODEL_NAME"],
+    base_url=profile.secret["MODEL_URL"],
+    api_key=profile.secret["API_KEY"],
 )
 shell_backend = LocalShellBackend(
-    root_dir=workspace_path,
+    root_dir=profile.workspace,
     virtual_mode=True,
     inherit_env=True,
 )
 system_prompt = (
     "你是使用者的個人助理，預設使用繁體中文回答。"
-    f"系統是 {Profile.SYSTEM} 環境，請使用這個系統的指令語法。"
-    "不需要使用虛擬環境。"
+    f"系統是 {profile.os} 環境，請使用這個系統的指令語法。"
 
     # 檔案工具：只看得到工作資料夾，路徑用 / 開頭。
     "read_file、write_file、edit_file、ls 等檔案工具只能存取工作資料夾，"
-    "路徑一律用 / 開頭，/ 就代表工作資料夾，例如 /result.txt。"
+    "路徑一律用 / 開頭，路徑 / 就代表工作資料夾，例如 /result.txt, /sample.py 等。"
     "不要在檔案工具的路徑裡寫 C: 這種磁碟代號。"
 
     # execute：可以碰到整台電腦，目前位置就是工作資料夾。
@@ -43,14 +39,20 @@ system_prompt = (
     "可以用完整路徑存取電腦上的其他檔案。"
 
     # 使用者給的檔案：先複製進來，不動原檔。
-    "使用者提供工作資料夾以外的檔案時，"
+    "當使用者提供工作資料夾以外的檔案時，"
     "先用 execute 把它複製到工作資料夾，再用檔案工具讀取。"
-    "只能複製，不要移動或修改原本的檔案。"
+    "**只能複製**原本的檔案。"
+    "**禁止移動或修改**原本的檔案。"
 
     # 圖片和聲音：用 read_file 讀。
-    "要看圖片或聽聲音時，用 read_file 讀取，你可以看到圖片、聽到聲音。"
+    "要看圖片或聽聲音時，用 read_file 讀取，如果你有能力，你可以看到圖片、聽到聲音。"
 
     "你產生的暫存檔和分析結果，都存在工作資料夾裡。"
+
+    # 回報位置：給使用者看實際路徑，不要給 / 開頭的虛擬路徑。
+    f"工作資料夾在電腦上的實際位置是 {profile.workspace}。"
+    "告訴使用者檔案存在哪裡時，要給實際位置，"
+    f"例如 /content.txt 要說成 {profile.workspace / 'content.txt'} 等。"
 )
 default_agent = create_deep_agent(
     model=chat_model,

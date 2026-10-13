@@ -256,8 +256,13 @@ class Screen(App):
     ]
     pass
 
+def activate() -> None:
+    """啟動 TUI"""
+
+    Screen().run()
+    return
 
 if __name__ == "__main__":
 
-    Screen().run()
+    activate()
     pass
